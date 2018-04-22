@@ -9,6 +9,9 @@ const Profile = require('../../models/Profile');
 //Load user model
 const User = require('../../models/User');
 
+//Load validation
+const validateProfileInput = require('../../validation/profile');
+
 // @route   GET api/profile/test
 // @desc    Tests profile route
 // @access  Public
@@ -21,6 +24,7 @@ router.get('/', passport.authenticate('jwt', {session: false}), (req, res) => {
     const errors = {};
 
     Profile.findOne({ user: req.user.id })
+        .populate('user', ['name', 'avatar'])
         .then(profile => {
             if(!profile) {
                 errors.noprofile = 'There is no profile for this user';
@@ -35,6 +39,14 @@ router.get('/', passport.authenticate('jwt', {session: false}), (req, res) => {
 // @desc    create or edit user profile
 // @access  Private
 router.post('/', passport.authenticate('jwt', {session: false}), (req, res) => {
+    const { errors, isValid } = validateProfileInput(req.body);
+
+    //check validation
+    if(!isValid) {
+        //return any errors with 400 status
+        return res.status(400).json(errors);
+    }
+
     // get fields
     const profileFields = {};
     profileFields.user = req.user.id;
@@ -47,7 +59,7 @@ router.post('/', passport.authenticate('jwt', {session: false}), (req, res) => {
     if(req.body.githubusername) profileFields.githubusername = req.body.githubusername;
     
     //skills - split into an array
-    if(typeof req.body.skill !== 'undefined') {
+    if(typeof req.body.skills !== 'undefined') {
         profileFields.skills = req.body.skills.split(',');
     }
 
