@@ -216,4 +216,53 @@ router.post('/education', passport.authenticate('jwt', { session: false }), (req
         })
 });
 
+// @route   DELETE api/profile/experience/:exp_id
+// @desc    delete experience from profile
+// @access  Private
+router.delete('/experience/:exp_id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    Profile.findOne({ user: req.user.id })
+        .then(profile => {
+            const removeIndex = profile.experience
+                .map(item => item.id)
+                .indexOf(req.params.exp_id);
+
+                //splice out of array
+                profile.experience.splice(removeIndex, 1);
+
+                //save
+                profile.save().then(profile => res.json(profile))
+        })
+        .catch(err => res.status(400).json(err));
+});
+
+// @route   DELETE api/profile/education/:edu_id
+// @desc    delete education from profile
+// @access  Private
+router.delete('/education/:edu_id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    Profile.findOne({ user: req.user.id })
+        .then(profile => {
+            const removeIndex = profile.education
+                .map(item => item.id)
+                .indexOf(req.params.exp_id);
+
+                //splice out of array
+                profile.education.splice(removeIndex, 1);
+
+                //save
+                profile.save().then(profile => res.json(profile))
+        })
+        .catch(err => res.status(400).json(err));
+});
+
+// @route   DELETE api/profile
+// @desc    delete user and profile
+// @access  Private
+router.delete('/', passport.authenticate('jwt', { session: false }), (req, res) => {
+    Profile.findOneAndRemove( {user: req.user.id })
+        .then(() => {
+            User.findOneAndRemove( { _id: req.user.id })
+                .then(() => res.json({success: true}));
+        })
+});
+
 module.exports = router;
